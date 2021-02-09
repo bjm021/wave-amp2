@@ -4,6 +4,8 @@
 This is a modified version that works with the CC: Tweaked mod for 1.16.4.
 It can use commands on a Command Computer or Speakers on normal Computers. (No other mods required)
 
+![wave-amp2](https://cdn.bjmsw.net/img/wave-amp2.png)
+
 ## Features:
 - Updated for CC: Tweaked using 1.16 commands or CC: Tweaked speakers
 - Plays NBS (Note Block Studio) files

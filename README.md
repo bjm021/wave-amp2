@@ -23,7 +23,7 @@ It can use commands on a Command Computer or Speakers on normal Computers.
 ## Installation
 
 ### Program
-- wave-amp2 `pastebin get nKyXwuuf`
+- wave-amp2 `pastebin get nKyXwuuf wave-amp2`
 ### Themes
 - dark theme `pastebin get HYrhP1yN darktheme`
 - red theme `pastebin get EP0vBAa5 redtheme`

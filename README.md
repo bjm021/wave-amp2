@@ -2,7 +2,7 @@
 ### wave-amp is a fully-featured music player for  CC: Tweaked, based on [wave-amp](http://www.computercraft.info/forums2/index.php?/topic/28091-wave-amp-a-fully-featured-music-player/) powered by [wave](https://github.com/CrazedProgrammer/wave).
 
 This is a modified version that works with the CC: Tweaked mod for 1.16.4.
-It can use commands on a Command Computer or Speakers on normal Computers.
+It can use commands on a Command Computer or Speakers on normal Computers. (No other mods required)
 
 ## Features:
 - Updated for CC: Tweaked using 1.16 commands or CC: Tweaked speakers

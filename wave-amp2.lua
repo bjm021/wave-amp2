@@ -1100,7 +1100,8 @@ examples:
  -f 10011:01100      sets the filter so the bass and basedrum instruments only come out of the second output
 -v <volume[:second]> sets the volume for the outputs.
 --nrm --stp --rep --shf   sets the play mode.
---noui --noinput     disables the ui/keyboard input]]
+--noui --noinput     disables the ui/keyboard input
+--exit			     to reboot the system after a song played]]
 
 
 local trackMode = 1
@@ -1115,6 +1116,7 @@ local context, track, instance
 
 -- ui stuff
 local noUI = false
+local exitAfter = false
 local noInput = false
 local screenWidth, screenHeight = term.getSize()
 local trackScroll = 0
@@ -1208,6 +1210,11 @@ local function init(args)
 	local i, argtype = 1
 	while i <= #args do
 		if not argtype then
+
+			if args[i] == "--exit" then
+				exitAfter = true;
+			end
+
 			if args[i] == "-h" then
 				print(cmdHelp)
 				noUI = true
@@ -1600,6 +1607,9 @@ local function run()
 			local prevtick = instance.tick
 			context:update()
 			if prevtick > 1 and instance.tick == 1 then
+				if exitAfter then
+					os.reboot()
+				end
 				nextSong()
 			end
 			drawDynamic()

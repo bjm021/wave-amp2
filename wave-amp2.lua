@@ -731,7 +731,7 @@ local wave = { }
 wave.version = "2.0.0"
 
 wave._oldSoundMap = {"harp", "bassattack", "bd", "snare", "hat"}
-wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat"}
+wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flute", "bell", "chime", "xylophone"}
 wave._defaultThrottle = 99
 wave._defaultClipMode = 1
 wave._maxInterval = 1
@@ -752,7 +752,7 @@ function wave.createContext(clock, volume)
 	local context = setmetatable({ }, {__index = wave.context})
 	context.outputs = { }
 	context.instances = { }
-	context.vs = {0, 0, 0, 0, 0}
+	context.vs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	context.prevClock = clock
 	context.volume = volume
 	return context
@@ -842,7 +842,7 @@ function wave.context:update(interval)
 	for i = 1, #self.outputs do
 		self.outputs[i].notes = 0
 	end
-	for i = 1, 5 do
+	for i = 1, 10 do
 		self.vs[i] = 0
 	end
 	if interval > 0 then
@@ -1022,7 +1022,7 @@ function wave.loadTrack(path)
 			end
 			local instrument = readInt(1)
 			local key = readInt(1)
-			if instrument <= 4 then -- nbs can be buggy
+			if instrument <= 9 then -- nbs can be buggy
 				track.layers[layer].notes[tick * 2 - 1] = instrument + 1
 				track.layers[layer].notes[tick * 2] = key - 33
 			end
@@ -1058,7 +1058,7 @@ function wave.createInstance(track, volume, playing, loop)
 	instance.loop = loop
 	instance.tick = 1
 	return instance
-end 
+end
 
 function wave.instance:update(interval)
 	local notes = { }
@@ -1121,12 +1121,12 @@ local noInput = false
 local screenWidth, screenHeight = term.getSize()
 local trackScroll = 0
 local currentTrack = 1
-local vsEasings = {0, 0, 0, 0, 0}
-local vsStep = 5
+local vsEasings = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+local vsStep = 10
 local vsDecline = 0.25
 
 -- theme
-local theme = term.isColor() and 
+local theme = term.isColor() and
 {
 	topBar = colors.lime,
 	topBarTitle = colors.white,
@@ -1296,9 +1296,9 @@ local function init(args)
 				end
 			elseif argtype == "-f" then
 				for str in args[i]:gmatch("([^:]+)") do
-					if #str == 5 then
+					if #str == 10 then
 						local filter = { }
-						for i = 1, 5 do
+						for i = 1, 10 do
 							if str:sub(i, i) == "1" then
 								filter[i] = true
 							elseif str:sub(i, i) == "0" then
@@ -1348,7 +1348,7 @@ local function init(args)
 		volumes[1] = 1
 	end
 	if #filters == 0 then
-		filters[1] = {true, true, true, true, true}
+		filters[1] = {true, true, true, true, true, true, true, true, true, true}
 	end
 	if #volumes == 1 then
 		for i = 2, #outputs do
@@ -1403,7 +1403,7 @@ local function drawStatic()
 	term.setTextColor(theme.topBarClose)
 	term.write("X")
 
-	local scrollnub = math.floor(trackScroll / (#tracks - screenHeight + 7) * (screenHeight - 10) + 0.5) 
+	local scrollnub = math.floor(trackScroll / (#tracks - screenHeight + 7) * (screenHeight - 10) + 0.5)
 
 	term.setTextColor(theme.song)
 	term.setBackgroundColor(theme.songBackground)
@@ -1443,7 +1443,7 @@ end
 
 local function drawDynamic()
 	if noUI then return end
-	for i = 1, 5 do
+	for i = 1, 10 do
 		vsEasings[i] = vsEasings[i] - vsDecline
 		if vsEasings[i] < 0 then
 			vsEasings[i] = 0
@@ -1500,7 +1500,7 @@ local function playSong(index)
 		end
 		if currentTrack > trackScroll + screenHeight - 7 then
 			trackScroll = currentTrack - screenHeight + 7
-		end 
+		end
 		drawStatic()
 	end
 end
@@ -1516,7 +1516,7 @@ end
 local function setScroll(scroll)
 	trackScroll = scroll
 	if trackScroll > #tracks - screenHeight + 7 then
-		trackScroll = #tracks - screenHeight + 7 
+		trackScroll = #tracks - screenHeight + 7
 	end
 	if trackScroll < 0 then
 		trackScroll = 0

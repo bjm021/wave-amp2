@@ -53,4 +53,5 @@ examples:
 -v <volume[:second]>    sets the volume for the outputs.
 --nrm --stp --rep --shf sets the play mode.
 --noui --noinput        disables the ui/keyboard input
+--exit                  to reboot the system after a song played
 ```

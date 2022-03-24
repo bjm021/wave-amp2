@@ -1,5 +1,5 @@
 # wave-amp2
-### wave-amp2 is a fully-featured music player for  CC: Tweaked, based on [wave-amp](http://www.computercraft.info/forums2/index.php?/topic/28091-wave-amp-a-fully-featured-music-player/) powered by [wave](https://github.com/CrazedProgrammer/wave).
+### wave-amp2 is a fully-featured music player for  CC: Tweaked, based on [wave-amp](http://www.computercraft.info/forums2/index.php?/topic/28091-wave-amp-a-fully-featured-music-player/) powered by [wave](https://github.com/CrazedProgrammer/wave), now with OpenNBS support.
 
 This is a modified version that works with the CC: Tweaked mod for 1.16.4.
 It can use commands on a Command Computer or Speakers on normal Computers. (No other mods required)
@@ -7,7 +7,7 @@ It can use commands on a Command Computer or Speakers on normal Computers. (No o
 ![wave-amp2](https://cdn.bjmsw.net/img/wave-amp2.png)
 
 ## Features:
-- Updated for CC: Tweaked using 1.16 commands or CC: Tweaked speakers
+- Updated for CC: Tweaked using 1.16+ commands or CC: Tweaked speakers
 - Plays NBS (Note Block Studio) files
   - wave-amp will automatically load all .nbs files on your CC: Tweaked computer.
 - Cool UI
@@ -15,6 +15,7 @@ It can use commands on a Command Computer or Speakers on normal Computers. (No o
 - Different play modes (normal, stop, repeat, shuffle)
 - Custom themes
 - Flexibility through command-line arguments
+- Compatability with the newer Open Note Block Studio
 
 ## Set-Up
 - Either place a command computer or a advanced computer
@@ -35,9 +36,9 @@ It can use commands on a Command Computer or Speakers on normal Computers. (No o
 > Thanks to [Bomb Bloke](http://www.computercraft.info/forums2/index.php?/user/15121-bomb-bloke/) [(Original Comment)](http://www.computercraft.info/forums2/index.php?/topic/28091-wave-amp-a-fully-featured-music-player/page__view__findpost__p__262827)
 
 ## Make your own songs
-wave-amp2 uses nbs files for music storage. You can create your own songs using [Note Block Studio](https://www.stuffbydavid.com/mcnbs) or the ~~newer open-source version [Open Note Block Studio](https://opennbs.org/)~~ (compatability with the newer version is not possible at the moment)
+wave-amp2 uses nbs files for music storage. You can create your own songs using [Note Block Studio](https://www.stuffbydavid.com/mcnbs) or the newer open-source version [Open Note Block Studio](https://opennbs.org/)
 
-With Note Block Studio you can convert midi versions of your favourite songs to nbs files ans play them in-game
+With Note Block Studio you can convert midi versions of your favourite songs to nbs files ans play them in-game.
 
 ## Command line arguments
 ```

@@ -735,10 +735,10 @@ wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flut
 wave._defaultThrottle = 99
 wave._defaultClipMode = 1
 wave._maxInterval = 1
-wave._isNewSystem = false
-if _HOST then
-	wave._isNewSystem = _HOST:sub(15, #_HOST) >= "1.80"
-end
+wave._isNewSystem = true
+-- if _HOST then
+--	wave._isNewSystem = _HOST:sub(15, #_HOST) >= "1.80"
+-- end
 
 wave.context = { }
 wave.output = { }
@@ -950,6 +950,115 @@ function wave.output:playNote(note, pitch, volume)
 end
 
 
+function wave.loadNewTrack(path)
+
+	local track = setmetatable({ }, {__index = wave.track})
+	local handle = fs.open(path, "rb")
+	if not handle then return end
+
+	local function readInt(size)
+		local num = 0
+		for i = 0, size - 1 do
+			local byte = handle.read()
+			if not byte then -- dont leave open file handles no matter what
+				handle.close()
+				return
+			end
+			num = num + byte * (256 ^ i)
+		end
+		return num
+	end
+	local function readStr()
+		local length = readInt(4)
+		if not length then return end
+		local data = { }
+		for i = 1, length do
+			data[i] = string.char(handle.read())
+		end
+		return table.concat(data)
+	end
+
+	-- Part #1: Metadata
+	print("New format bytes: " .. readInt(2))
+
+	track.version = readInt(1);
+	track.instCount = readInt(1);
+	track.length = readInt(2) -- song length (ticks)
+	track.height = readInt(2) -- song height
+	track.name = readStr() -- song name
+	track.author = readStr() -- song author
+	track.originalAuthor = readStr() -- original song author
+	track.description = readStr() -- song description
+	track.tempo = readInt(2) / 100 -- tempo (ticks per second)
+	track.autoSaving = readInt(1) == 0 and true or false -- auto-saving
+	track.autoSavingDuration = readInt(1) -- auto-saving duration
+	track.timeSignature = readInt(1) -- time signature (3 = 3/4)
+	track.minutesSpent = readInt(4) -- minutes spent
+	track.leftClicks = readInt(4) -- left clicks
+	track.rightClicks = readInt(4) -- right clicks
+	track.blocksAdded = readInt(4) -- blocks added
+	track.blocksRemoved = readInt(4) -- blocks removed
+	track.schematicFileName = readStr() -- midi/schematic file name
+	track.loop = readInt(1)
+	track.maxLoopCount = readInt(1)
+	track.loopStartTick = readInt(2)
+
+
+
+
+
+	-- Part #2: Notes
+	track.layers = { }
+	for i = 1, track.height do
+		track.layers[i] = {name = "Layer "..i, volume = 1.0}
+		track.layers[i].notes = { }
+	end
+
+	local tick = 0
+	while true do
+		local tickJumps = readInt(2)
+		if tickJumps == 0 then break end
+		tick = tick + tickJumps
+		local layer = 0
+		while true do
+			local layerJumps = readInt(2)
+			if layerJumps == 0 then break end
+			layer = layer + layerJumps
+			if layer > track.height then -- nbs can be buggy
+				for i = track.height + 1, layer do
+					track.layers[i] = {name = "Layer "..i, volume = 1.0}
+					track.layers[i].notes = { }
+				end
+				track.height = layer
+			end
+			local instrument = readInt(1)
+			local key = readInt(1)
+			local noteBlockVolume = readInt(1)
+			local noteBlockPan = readInt(1)
+			local noteBlockPitch = readInt(2)
+			if instrument <= 9 then -- nbs can be buggy
+				track.layers[layer].notes[tick * 2 - 1] = instrument + 1
+				track.layers[layer].notes[tick * 2] = key - 33
+			end
+		end
+	end
+
+
+	-- Part #3: Layers
+	for i = 1, track.height do
+		local name = readStr()
+		local layerLock = readInt(1)
+		local layerVolume = readInt(1)
+		local layerStereo = readInt(1)
+		if not name then print("NO NAME") break end -- if layer data doesnt exist, abort
+		track.layers[i].name = name
+		track.layers[i].volume = layerVolume / 100
+	end
+
+
+	handle.close()
+	return track
+end
 
 function wave.loadTrack(path)
 	local track = setmetatable({ }, {__index = wave.track})
@@ -979,7 +1088,15 @@ function wave.loadTrack(path)
 	end
 
 	-- Part #1: Metadata
-	track.length = readInt(2) -- song length (ticks)
+
+	firstBytes = readInt(2)
+	if firstBytes == 0 then
+		print("Found new NBS file; Using new loader...")
+		handle.close()
+		return wave.loadNewTrack(path)
+	end
+
+	track.length = firstBytes -- song length (ticks)
 	track.height = readInt(2) -- song height
 	track.name = readStr() -- song name
 	track.author = readStr() -- song author
@@ -1127,53 +1244,53 @@ local vsDecline = 0.25
 
 -- theme
 local theme = term.isColor() and
-{
-	topBar = colors.lime,
-	topBarTitle = colors.white,
-	topBarOption = colors.white,
-	topBarOptionSelected = colors.lightGray,
-	topBarClose = colors.white,
-	song = colors.black,
-	songBackground = colors.white,
-	songSelected = colors.black,
-	songSelectedBackground = colors.lightGray,
-	scrollBackground = colors.lightGray,
-	scrollBar = colors.gray,
-	scrollButton = colors.black,
-	visualiserBar = colors.lime,
-	visualiserBackground = colors.green,
-	progressTime = colors.white,
-	progressBackground = colors.lightGray,
-	progressLine = colors.gray,
-	progressNub = colors.gray,
-	progressNubBackground = colors.gray,
-	progressNubChar = "=",
-	progressButton = colors.white
-}
-or
-{
-	topBar = colors.lightGray,
-	topBarTitle = colors.white,
-	topBarOption = colors.white,
-	topBarOptionSelected = colors.gray,
-	topBarClose = colors.white,
-	song = colors.black,
-	songBackground = colors.white,
-	songSelected = colors.black,
-	songSelectedBackground = colors.lightGray,
-	scrollBackground = colors.lightGray,
-	scrollBar = colors.gray,
-	scrollButton = colors.black,
-	visualiserBar = colors.black,
-	visualiserBackground = colors.gray,
-	progressTime = colors.white,
-	progressBackground = colors.lightGray,
-	progressLine = colors.gray,
-	progressNub = colors.gray,
-	progressNubBackground = colors.gray,
-	progressNubChar = "=",
-	progressButton = colors.white
-}
+		{
+			topBar = colors.lime,
+			topBarTitle = colors.white,
+			topBarOption = colors.white,
+			topBarOptionSelected = colors.lightGray,
+			topBarClose = colors.white,
+			song = colors.black,
+			songBackground = colors.white,
+			songSelected = colors.black,
+			songSelectedBackground = colors.lightGray,
+			scrollBackground = colors.lightGray,
+			scrollBar = colors.gray,
+			scrollButton = colors.black,
+			visualiserBar = colors.lime,
+			visualiserBackground = colors.green,
+			progressTime = colors.white,
+			progressBackground = colors.lightGray,
+			progressLine = colors.gray,
+			progressNub = colors.gray,
+			progressNubBackground = colors.gray,
+			progressNubChar = "=",
+			progressButton = colors.white
+		}
+		or
+		{
+			topBar = colors.lightGray,
+			topBarTitle = colors.white,
+			topBarOption = colors.white,
+			topBarOptionSelected = colors.gray,
+			topBarClose = colors.white,
+			song = colors.black,
+			songBackground = colors.white,
+			songSelected = colors.black,
+			songSelectedBackground = colors.lightGray,
+			scrollBackground = colors.lightGray,
+			scrollBar = colors.gray,
+			scrollButton = colors.black,
+			visualiserBar = colors.black,
+			visualiserBackground = colors.gray,
+			progressTime = colors.white,
+			progressBackground = colors.lightGray,
+			progressLine = colors.gray,
+			progressNub = colors.gray,
+			progressNubBackground = colors.gray,
+			progressNubChar = "=",
+			progressButton = colors.white
+		}
 
 local running = true
 
@@ -1376,9 +1493,6 @@ local function init(args)
 	context:addOutputs(outputs)
 end
 
-
-
-
 local function formatTime(secs)
 	local mins = math.floor(secs / 60)
 	secs = secs - mins * 60
@@ -1390,8 +1504,8 @@ local function drawStatic()
 	term.setCursorPos(1, 1)
 	term.setBackgroundColor(theme.topBar)
 	term.setTextColor(theme.topBarTitle)
-	term.write("wave-amp2 by b.jm021")
-	term.write((" "):rep(screenWidth - 37))
+	term.write("wave-amp2 (with OpenNBS support)")
+	term.write((" "):rep(screenWidth - 49))
 	term.setTextColor(trackMode == 1 and theme.topBarOptionSelected or theme.topBarOption)
 	term.write("nrm ")
 	term.setTextColor(trackMode == 2 and theme.topBarOptionSelected or theme.topBarOption)

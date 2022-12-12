@@ -56,3 +56,6 @@ examples:
 --noui --noinput        disables the ui/keyboard input
 --exit                  to reboot the system after a song played
 ```
+
+You can use this script on monitors with the monitor command:
+``` monitor <monitor_name> wave-amp2 ```

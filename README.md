@@ -1,7 +1,7 @@
 # wave-amp2
 ### wave-amp2 is a fully-featured music player for  CC: Tweaked, based on [wave-amp](http://www.computercraft.info/forums2/index.php?/topic/28091-wave-amp-a-fully-featured-music-player/) powered by [wave](https://github.com/CrazedProgrammer/wave), now with OpenNBS support.
 
-This is a modified version that works with the CC: Tweaked mod for 1.16.4.
+This is a modified version that works with the CC: Tweaked mod.
 It can use commands on a Command Computer or Speakers on normal Computers. (No other mods required)
 
 ![wave-amp2](https://cdn.bjmsw.net/img/wave-amp2.png)

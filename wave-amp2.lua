@@ -731,7 +731,7 @@ local wave = { }
 wave.version = "2.0.0"
 
 wave._oldSoundMap = {"harp", "bassattack", "bd", "snare", "hat"}
-wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flute", "bell", "chime", "xylophone"}
+wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flute", "bell", "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"}
 wave._defaultThrottle = 99
 wave._defaultClipMode = 1
 wave._maxInterval = 1
@@ -752,7 +752,7 @@ function wave.createContext(clock, volume)
 	local context = setmetatable({ }, {__index = wave.context})
 	context.outputs = { }
 	context.instances = { }
-	context.vs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	context.vs = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	context.prevClock = clock
 	context.volume = volume
 	return context
@@ -859,7 +859,7 @@ end
 
 function wave.createOutput(out, volume, filter, throttle, clipMode)
 	volume = volume or 1.0
-	filter = filter or {true, true, true, true, true}
+	filter = filter or {true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true}
 	throttle = throttle or wave._defaultThrottle
 	clipMode = clipMode or wave._defaultClipMode
 
@@ -943,7 +943,9 @@ function wave.output:playNote(note, pitch, volume)
 			end
 		end
 	end
+	--print("DEBUG Plaing note "..note.." with instrument "..wave._newSoundMap[note].. " !")
 	if self.filter[note] and self.notes < self.throttle then
+		--print("TEST")
 		self.nativePlayNote(note, pitch, volume * self.volume)
 		self.notes = self.notes + 1
 	end
@@ -1036,7 +1038,7 @@ function wave.loadNewTrack(path)
 			local noteBlockVolume = readInt(1)
 			local noteBlockPan = readInt(1)
 			local noteBlockPitch = readInt(2)
-			if instrument <= 9 then -- nbs can be buggy
+			if instrument <= 16 then -- nbs can be buggy
 				track.layers[layer].notes[tick * 2 - 1] = instrument + 1
 				track.layers[layer].notes[tick * 2] = key - 33
 			end
@@ -1238,7 +1240,7 @@ local noInput = false
 local screenWidth, screenHeight = term.getSize()
 local trackScroll = 0
 local currentTrack = 1
-local vsEasings = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+local vsEasings = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 local vsStep = 10
 local vsDecline = 0.25
 
@@ -1415,7 +1417,7 @@ local function init(args)
 				for str in args[i]:gmatch("([^:]+)") do
 					if #str == 10 then
 						local filter = { }
-						for i = 1, 10 do
+						for i = 1, 16 do
 							if str:sub(i, i) == "1" then
 								filter[i] = true
 							elseif str:sub(i, i) == "0" then
@@ -1465,7 +1467,7 @@ local function init(args)
 		volumes[1] = 1
 	end
 	if #filters == 0 then
-		filters[1] = {true, true, true, true, true, true, true, true, true, true}
+		filters[1] = {true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true}
 	end
 	if #volumes == 1 then
 		for i = 2, #outputs do

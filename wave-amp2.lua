@@ -1024,7 +1024,10 @@ function wave.loadNewTrack(path)
 		local layer = 0
 		while true do
 			local layerJumps = readInt(2)
-			if layerJumps == 0 then break end
+			if layerJumps == 0 then
+				track.length = tick
+				break
+			end
 			layer = layer + layerJumps
 			if layer > track.height then -- nbs can be buggy
 				for i = track.height + 1, layer do
@@ -1130,7 +1133,10 @@ function wave.loadTrack(path)
 		local layer = 0
 		while true do
 			local layerJumps = readInt(2)
-			if layerJumps == 0 then break end
+			if layerJumps == 0 then
+				track.length = tick
+				break
+			end
 			layer = layer + layerJumps
 			if layer > track.height then -- nbs can be buggy
 				for i = track.height + 1, layer do

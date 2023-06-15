@@ -727,11 +727,28 @@ AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ]]
 
+function deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
+
+
 local wave = { }
 wave.version = "2.0.0"
 
 wave._oldSoundMap = {"harp", "bassattack", "bd", "snare", "hat"}
-wave._newSoundMap = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flute", "bell", "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"}
+wave._newSoundMap_original = {"harp", "bass", "basedrum", "snare", "hat", "guitar", "flute", "bell", "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"}
+wave._newSoundMap = deepcopy(wave._newSoundMap_original)
 wave._defaultThrottle = 99
 wave._defaultClipMode = 1
 wave._maxInterval = 1
@@ -825,6 +842,10 @@ end
 function wave.context:playNote(note, pitch, volume)
 	volume = volume or 1.0
 
+    if not (self.vs[note]) then
+        self.vs[note] = 0
+    end
+
 	self.vs[note] = self.vs[note] + volume
 	for i = 1, #self.outputs do
 		self.outputs[i]:playNote(note, pitch, volume * self.volume)
@@ -881,8 +902,12 @@ function wave.createOutput(out, volume, filter, throttle, clipMode)
 				output.type = "speaker"
 				function output.nativePlayNote(note, pitch, volume)
 					if output.volume * volume > 0 then
-						--nb.playSound("minecraft:block.note_block."..wave._newSoundMap[note], volume, math.pow(2, (pitch - 12) / 12))
-						nb.playNote(wave._newSoundMap[note], volume, pitch)
+						if note <= 16 then
+                            --nb.playSound("minecraft:block.note_block."..wave._newSoundMap[note], volume, math.pow(2, (pitch - 12) / 12))
+                            nb.playNote(wave._newSoundMap[note], volume, pitch)
+                        else
+                            nb.playSound(wave._newSoundMap[note], volume, math.pow(2, (pitch - 12) / 12))
+                        end
 					end
 				end
 				return output
@@ -893,8 +918,13 @@ function wave.createOutput(out, volume, filter, throttle, clipMode)
 			output.type = "commands"
 			if wave._isNewSystem then
 				function output.nativePlayNote(note, pitch, volume)
-					out.execAsync("playsound minecraft:block.note_block."..wave._newSoundMap[note].." record @a ~ ~ ~ "..tostring(volume).." "..tostring(math.pow(2, (pitch - 12) / 12)))
-				end
+                    if note <= 16 then
+					    out.execAsync("playsound minecraft:block.note_block."..wave._newSoundMap[note].." record @a ~ ~ ~ "..tostring(volume).." "..tostring(math.pow(2, (pitch - 12) / 12)))
+                    else
+                        -- custom instruments
+                        out.execAsync("playsound "..wave._newSoundMap[note].." record @a ~ ~ ~ "..tostring(volume).." "..tostring(math.pow(2, (pitch - 12) / 12)))
+                    end
+                end
 			else
 				function output.nativePlayNote(note, pitch, volume)
 					out.execAsync("playsound note_block."..wave._oldSoundMap[note].." @a ~ ~ ~ "..tostring(volume).." "..tostring(math.pow(2, (pitch - 12) / 12)))
@@ -944,6 +974,9 @@ function wave.output:playNote(note, pitch, volume)
 		end
 	end
 	--print("DEBUG Plaing note "..note.." with instrument "..wave._newSoundMap[note].. " !")
+    if not (self.filter[note]) then
+        self.filter[note] = true
+    end
 	if self.filter[note] and self.notes < self.throttle then
 		--print("TEST")
 		self.nativePlayNote(note, pitch, volume * self.volume)
@@ -955,6 +988,7 @@ end
 function wave.loadNewTrack(path)
 
 	local track = setmetatable({ }, {__index = wave.track})
+    track._soundMap = deepcopy(wave._newSoundMap_original) -- inherit default sound map
 	local handle = fs.open(path, "rb")
 	if not handle then return end
 
@@ -1041,6 +1075,10 @@ function wave.loadNewTrack(path)
 			if instrument <= 16 then -- nbs can be buggy
 				track.layers[layer].notes[tick * 2 - 1] = instrument + 1
 				track.layers[layer].notes[tick * 2] = key - 33
+            else
+                -- custom instruments
+                track.layers[layer].notes[tick * 2 - 1] = instrument + 1
+				track.layers[layer].notes[tick * 2] = key - 33
 			end
 		end
 	end
@@ -1056,6 +1094,18 @@ function wave.loadNewTrack(path)
 		track.layers[i].name = name
 		track.layers[i].volume = layerVolume / 100
 	end
+
+
+    -- Part #4: Custom instruments
+    local customInstCount = readInt(1)
+    for i = 1, customInstCount do
+        local name = readStr() -- sound name without
+        local instFilename = readStr()
+        local key = readInt(1)
+        local press = readInt(1)
+        -- Create new instrument
+        table.insert(track._soundMap, name)
+    end
 
 
 	handle.close()
@@ -1609,6 +1659,7 @@ local function playSong(index)
 	if index >= 1 and index <= #tracks then
 		currentTrack = index
 		track = tracks[currentTrack]
+        wave._newSoundMap = track._soundMap or wave._newSoundMap_original -- change the sound map
 		context:removeInstance(1)
 		instance = context:addInstance(track, 1, trackMode ~= 2, trackMode == 3)
 		if currentTrack <= trackScroll then
